@@ -1,0 +1,1521 @@
+openapi: 3.0.0
+info:
+  description: API for managing event locations
+  title: Event Management Service
+  version: 1.0.0
+servers:
+- url: http://localhost:8080
+security:
+- bearerAuth: []
+tags:
+- name: Locations
+- name: Events
+- name: Users
+paths:
+  /locations:
+    get:
+      description: Get all locations. Available to all authorized users
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/EventLocation'
+                type: array
+          description: List of all locations
+        "401":
+          content:
+            application/json:
+              example:
+                message: Authentication required
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Authentication is missing or failed
+        "403":
+          content:
+            application/json:
+              example:
+                message: Insufficient permissions to perform the operation
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: User does not have sufficient permissions to perform this operation
+        "500":
+          content:
+            application/json:
+              example:
+                message: Internal server error
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Internal server error
+      summary: "Get list of all locations. Allowed roles=[ADMIN, USER]"
+      tags:
+      - Locations
+    post:
+      description: Create a new location. Available only to admins. Id must be set on the application side (by database)
+      requestBody:
+        content:
+          application/json:
+            example:
+              name: Ice Palace
+              address: "St. Petersburg, Pyatiletok 1"
+              capacity: 12300
+              description: Sports and concert complex in St. Petersburg
+            schema:
+              $ref: '#/components/schemas/EventLocation'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventLocation'
+          description: Location successfully created
+        "400":
+          content:
+            application/json:
+              example:
+                message: Invalid request
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: "Request with invalid data. For example, attempt to use an already taken login or invalid request parameters."
+        "401":
+          content:
+            application/json:
+              example:
+                message: Authentication required
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Authentication is missing or failed
+        "403":
+          content:
+            application/json:
+              example:
+                message: Insufficient permissions to perform the operation
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: User does not have sufficient permissions to perform this operation
+        "404":
+          content:
+            application/json:
+              example:
+                message: Entity not found
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Entity not found
+        "500":
+          content:
+            application/json:
+              example:
+                message: Internal server error
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Internal server error
+      summary: "Create new location. Allowed roles=[ADMIN]"
+      tags:
+      - Locations
+  /locations/{locationId}:
+    delete:
+      description: "Delete location by ID. Cannot delete locations that already have scheduled events (should return 400 error)"
+      parameters:
+      - description: Unique location identifier
+        in: path
+        name: locationId
+        required: true
+        schema:
+          example: 42
+          format: int64
+          type: integer
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventLocation'
+          description: Location successfully deleted
+        "401":
+          content:
+            application/json:
+              example:
+                message: Authentication required
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Authentication is missing or failed
+        "403":
+          content:
+            application/json:
+              example:
+                message: Insufficient permissions to perform the operation
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: User does not have sufficient permissions to perform this operation
+        "404":
+          content:
+            application/json:
+              example:
+                message: Entity not found
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Entity not found
+        "500":
+          content:
+            application/json:
+              example:
+                message: Internal server error
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Internal server error
+      summary: "Delete location. Allowed roles=[ADMIN]"
+      tags:
+      - Locations
+    get:
+      description: "Get location by ID. Consider what response codes should be returned in different scenarios. For example, 404 code if entity not found."
+      parameters:
+      - description: Unique location identifier
+        in: path
+        name: locationId
+        required: true
+        schema:
+          example: 42
+          format: int64
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventLocation'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              example:
+                message: Invalid request
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: "Request with invalid data. For example, attempt to use an already taken login or invalid request parameters."
+        "401":
+          content:
+            application/json:
+              example:
+                message: Authentication required
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Authentication is missing or failed
+        "403":
+          content:
+            application/json:
+              example:
+                message: Insufficient permissions to perform the operation
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: User does not have sufficient permissions to perform this operation
+        "404":
+          content:
+            application/json:
+              example:
+                message: Entity not found
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Entity not found
+        "500":
+          content:
+            application/json:
+              example:
+                message: Internal server error
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Internal server error
+      summary: "Get location by ID. Allowed roles=[ADMIN, USER]"
+      tags:
+      - Locations
+    put:
+      description: "Update location by its ID. Available only to admins. Consider parameter validation. Also consider that location capacity cannot be reduced because there may already be events scheduled at this location."
+      parameters:
+      - description: Unique location identifier
+        in: path
+        name: locationId
+        required: true
+        schema:
+          example: 42
+          format: int64
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            example:
+              name: New location name
+              address: New address
+              capacity: 20000
+              description: New description
+            schema:
+              $ref: '#/components/schemas/EventLocation'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventLocation'
+          description: Location successfully updated
+        "400":
+          content:
+            application/json:
+              example:
+                message: Invalid request
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: "Request with invalid data. For example, attempt to use an already taken login or invalid request parameters."
+        "401":
+          content:
+            application/json:
+              example:
+                message: Authentication required
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Authentication is missing or failed
+        "403":
+          content:
+            application/json:
+              example:
+                message: Insufficient permissions to perform the operation
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: User does not have sufficient permissions to perform this operation
+        "404":
+          content:
+            application/json:
+              example:
+                message: Entity not found
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Entity not found
+        "500":
+          content:
+            application/json:
+              example:
+                message: Internal server error
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Internal server error
+      summary: "Update location. Allowed roles=[ADMIN]"
+      tags:
+      - Locations
+  /users:
+    post:
+      description: Available without authorization. By default, a user with USER role is created. Creating a user with ADMIN role should be impossible. Login uniqueness must be checked. Logins must be different for different users.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegistration'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: User successfully registered
+        "400":
+          content:
+            application/json:
+              example:
+                message: Invalid request
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: "Request with invalid data. For example, attempt to use an already taken login or invalid request parameters."
+        "500":
+          content:
+            application/json:
+              example:
+                message: Internal server error
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Internal server error
+      security: []
+      summary: Register new user
+      tags:
+      - Users
+  /users/{userId}:
+    get:
+      description: "Get user data (available only to admins). Note that password should not be returned in the response"
+      parameters:
+      - description: Unique user identifier
+        in: path
+        name: userId
+        required: true
+        schema:
+          format: int64
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: User information
+        "401":
+          content:
+            application/json:
+              example:
+                message: Authentication required
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Authentication is missing or failed
+        "403":
+          content:
+            application/json:
+              example:
+                message: Insufficient permissions to perform the operation
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: User does not have sufficient permissions to perform this operation
+        "404":
+          content:
+            application/json:
+              example:
+                message: Entity not found
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Entity not found
+        "500":
+          content:
+            application/json:
+              example:
+                message: Internal server error
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Internal server error
+      summary: "Get user information by ID. Allowed roles=[ADMIN]"
+      tags:
+      - Users
+  /users/auth:
+    post:
+      description: Available without authorization. Get JWT token by user credentials
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCredentials'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JwtResponse'
+          description: "Authorization successful, JWT returned"
+        "400":
+          content:
+            application/json:
+              example:
+                message: Invalid request
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: "Request with invalid data. For example, attempt to use an already taken login or invalid request parameters."
+        "404":
+          content:
+            application/json:
+              example:
+                message: Entity not found
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Entity not found
+        "401":
+          content:
+            application/json:
+              example:
+                message: Authentication required
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Authentication is missing or failed
+        "500":
+          content:
+            application/json:
+              example:
+                message: Internal server error
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Internal server error
+      security: []
+      summary: User authorization and JWT token retrieval
+      tags:
+      - Users
+  /events:
+    post:
+      description: "Consider validation of all fields. All fields are mandatory when creating, also logic must be followed (for example, time cannot be in the past, cost > 0, etc.) Location must exist and its capacity must allow this event, i.e. number of places must be sufficient for all participants. Organizer (creator) of the event is not counted as a participant."
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventCreateRequestDto'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventDto'
+          description: Event successfully created. Returns created event.
+        "400":
+          content:
+            application/json:
+              example:
+                message: Invalid request
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: "Request with invalid data. For example, attempt to use an already taken login or invalid request parameters."
+        "401":
+          content:
+            application/json:
+              example:
+                message: Authentication required
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Authentication is missing or failed
+        "403":
+          content:
+            application/json:
+              example:
+                message: Insufficient permissions to perform the operation
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: User does not have sufficient permissions to perform this operation
+        "404":
+          content:
+            application/json:
+              example:
+                message: Entity not found
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Entity not found
+        "500":
+          content:
+            application/json:
+              example:
+                message: Internal server error
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Internal server error
+      summary: "Create new event. Allowed roles=[USER]"
+      tags:
+      - Events
+  /events/{eventId}:
+    delete:
+      description: "Available only to ADMIN, or event creator. I.e. role from JWT token must be ADMIN, or userId must be equal to event creator. Must implement \"soft deletion\" - the database row is not actually deleted, only event status is changed to CANCELLED. Also consider that not every event can be cancelled (can only cancel events that have not started yet)."
+      parameters:
+      - description: Unique event identifier
+        in: path
+        name: eventId
+        required: true
+        schema:
+          example: 10
+          format: int64
+          type: integer
+      responses:
+        "204":
+          description: Event successfully deleted
+        "400":
+          content:
+            application/json:
+              example:
+                message: Invalid request
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: "Request with invalid data. For example, attempt to use an already taken login or invalid request parameters."
+        "401":
+          content:
+            application/json:
+              example:
+                message: Authentication required
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Authentication is missing or failed
+        "403":
+          content:
+            application/json:
+              example:
+                message: Insufficient permissions to perform the operation
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: User does not have sufficient permissions to perform this operation
+        "404":
+          content:
+            application/json:
+              example:
+                message: Entity not found
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Entity not found
+        "500":
+          content:
+            application/json:
+              example:
+                message: Internal server error
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Internal server error
+      summary: "Delete event. Allowed roles=[USER, ADMIN]"
+      tags:
+      - Events
+    get:
+      description: "Consider what response codes should be returned in different scenarios. For example, 404 code if entity not found."
+      parameters:
+      - description: Unique event identifier
+        in: path
+        name: eventId
+        required: true
+        schema:
+          example: 10
+          format: int64
+          type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventDto'
+          description: Successful response
+        "400":
+          content:
+            application/json:
+              example:
+                message: Invalid request
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: "Request with invalid data. For example, attempt to use an already taken login or invalid request parameters."
+        "401":
+          content:
+            application/json:
+              example:
+                message: Authentication required
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Authentication is missing or failed
+        "403":
+          content:
+            application/json:
+              example:
+                message: Insufficient permissions to perform the operation
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: User does not have sufficient permissions to perform this operation
+        "404":
+          content:
+            application/json:
+              example:
+                message: Entity not found
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Entity not found
+        "500":
+          content:
+            application/json:
+              example:
+                message: Internal server error
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Internal server error
+      summary: "Get event by ID. Allowed roles=[USER, ADMIN]"
+      tags:
+      - Events
+    put:
+      description: "Update event by its ID. Available only to admins. Consider parameter validation. Also consider that event capacity cannot be reduced because there may already be registrations for this event."
+      parameters:
+      - description: Unique event identifier
+        in: path
+        name: eventId
+        required: true
+        schema:
+          example: 10
+          format: int64
+          type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventUpdateRequestDto'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventDto'
+          description: Updated event
+        "400":
+          content:
+            application/json:
+              example:
+                message: Invalid request
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: "Request with invalid data. For example, attempt to use an already taken login or invalid request parameters."
+        "401":
+          content:
+            application/json:
+              example:
+                message: Authentication required
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Authentication is missing or failed
+        "403":
+          content:
+            application/json:
+              example:
+                message: Insufficient permissions to perform the operation
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: User does not have sufficient permissions to perform this operation
+        "404":
+          content:
+            application/json:
+              example:
+                message: Entity not found
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Entity not found
+        "500":
+          content:
+            application/json:
+              example:
+                message: Internal server error
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Internal server error
+      summary: "Update event. Allowed roles=[USER, ADMIN]"
+      tags:
+      - Events
+  /events/search:
+    post:
+      description: Search for all events by filter
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventSearchRequestDto'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/EventDto'
+                type: array
+          description: "List of events matching the specified filters"
+        "400":
+          content:
+            application/json:
+              example:
+                message: Invalid request
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: "Request with invalid data. For example, attempt to use an already taken login or invalid request parameters."
+        "401":
+          content:
+            application/json:
+              example:
+                message: Authentication required
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Authentication is missing or failed
+        "403":
+          content:
+            application/json:
+              example:
+                message: Insufficient permissions to perform the operation
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: User does not have sufficient permissions to perform this operation
+        "404":
+          content:
+            application/json:
+              example:
+                message: Entity not found
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Entity not found
+        "500":
+          content:
+            application/json:
+              example:
+                message: Internal server error
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Internal server error
+      summary: "Search events by filter. Allowed roles=[USER, ADMIN]"
+      tags:
+      - Events
+  /events/my:
+    get:
+      description: "All events created by user, who performs booking."
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/EventDto'
+                type: array
+          description: "List of events created by user"
+        "401":
+          content:
+            application/json:
+              example:
+                message: Authentication required
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Authentication is missing or failed
+        "403":
+          content:
+            application/json:
+              example:
+                message: Insufficient permissions to perform the operation
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: User does not have sufficient permissions to perform this operation
+        "500":
+          content:
+            application/json:
+              example:
+                message: Internal server error
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Internal server error
+      summary: "Get all events created by current user. Allowed roles=[USER]"
+      tags:
+      - Events
+  /events/registrations/{eventId}:
+    post:
+      description: "Consider that event status must allow registration. You can only register for an event that has not ended and not cancelled."
+      parameters:
+      - description: Unique event identifier
+        in: path
+        name: eventId
+        required: true
+        schema:
+          example: 10
+          format: int64
+          type: integer
+      responses:
+        "200":
+          description: Successful registration for event
+        "400":
+          content:
+            application/json:
+              example:
+                message: Invalid request
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: "Request with invalid data. For example, attempt to use an already taken login or invalid request parameters."
+        "401":
+          content:
+            application/json:
+              example:
+                message: Authentication required
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Authentication is missing or failed
+        "403":
+          content:
+            application/json:
+              example:
+                message: Insufficient permissions to perform the operation
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: User does not have sufficient permissions to perform this operation
+        "404":
+          content:
+            application/json:
+              example:
+                message: Entity not found
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Entity not found
+        "500":
+          content:
+            application/json:
+              example:
+                message: Internal server error
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Internal server error
+      summary: "Register user for event by ID. Allowed roles=[USER]"
+      tags:
+      - Events
+  /events/registrations/cancel/{eventId}:
+    delete:
+      description: "Consider event status. Cannot cancel registration if event has already started or ended."
+      parameters:
+      - description: Unique event identifier
+        in: path
+        name: eventId
+        required: true
+        schema:
+          example: 10
+          format: int64
+          type: integer
+      responses:
+        "204":
+          description: Successful cancellation of registration for event
+        "400":
+          content:
+            application/json:
+              example:
+                message: Invalid request
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: "Request with invalid data. For example, attempt to use an already taken login or invalid request parameters."
+        "401":
+          content:
+            application/json:
+              example:
+                message: Authentication required
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Authentication is missing or failed
+        "403":
+          content:
+            application/json:
+              example:
+                message: Insufficient permissions to perform the operation
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: User does not have sufficient permissions to perform this operation
+        "404":
+          content:
+            application/json:
+              example:
+                message: Entity not found
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Entity not found
+        "500":
+          content:
+            application/json:
+              example:
+                message: Internal server error
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Internal server error
+      summary: "Cancel registration for event. Allowed roles=[USER]"
+      tags:
+      - Events
+  /events/registrations/my:
+    get:
+      description: "All events on which user is registered. Events must return all, even those that are cancelled or finished."
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/EventDto'
+                type: array
+          description: "List of events on which user is registered"
+        "401":
+          content:
+            application/json:
+              example:
+                message: Authentication required
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Authentication is missing or failed
+        "403":
+          content:
+            application/json:
+              example:
+                message: Insufficient permissions to perform the operation
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: User does not have sufficient permissions to perform this operation
+        "500":
+          content:
+            application/json:
+              example:
+                message: Internal server error
+                detailedMessage: More detailed error message
+                dateTime: 2024-12-03T10:15:30
+              schema:
+                $ref: '#/components/schemas/ErrorMessageResponse'
+          description: Internal server error
+      summary: "Get events on which current user is registered. Allowed roles=[USER]"
+      tags:
+      - Events
+components:
+  parameters:
+    locationId:
+      description: Unique location identifier
+      in: path
+      name: locationId
+      required: true
+      schema:
+        example: 42
+        format: int64
+        type: integer
+    userId:
+      description: Unique user identifier
+      in: path
+      name: userId
+      required: true
+      schema:
+        format: int64
+        type: integer
+    eventId:
+      description: Unique event identifier
+      in: path
+      name: eventId
+      required: true
+      schema:
+        example: 10
+        format: int64
+        type: integer
+  responses:
+    BadRequest:
+      content:
+        application/json:
+          example:
+            message: Invalid request
+            detailedMessage: More detailed error message
+            dateTime: 2024-12-03T10:15:30
+          schema:
+            $ref: '#/components/schemas/ErrorMessageResponse'
+      description: "Request with invalid data. For example, attempt to use an already taken login or invalid request parameters."
+    Unauthorized:
+      content:
+        application/json:
+          example:
+            message: Authentication required
+            detailedMessage: More detailed error message
+            dateTime: 2024-12-03T10:15:30
+          schema:
+            $ref: '#/components/schemas/ErrorMessageResponse'
+      description: Authentication is missing or failed
+    Forbidden:
+      content:
+        application/json:
+          example:
+            message: Insufficient permissions to perform the operation
+            detailedMessage: More detailed error message
+            dateTime: 2024-12-03T10:15:30
+          schema:
+            $ref: '#/components/schemas/ErrorMessageResponse'
+      description: User does not have sufficient permissions to perform this operation
+    NotFound:
+      content:
+        application/json:
+          example:
+            message: Entity not found
+            detailedMessage: More detailed error message
+            dateTime: 2024-12-03T10:15:30
+          schema:
+            $ref: '#/components/schemas/ErrorMessageResponse'
+      description: Entity not found
+    ServerError:
+      content:
+        application/json:
+          example:
+            message: Internal server error
+            detailedMessage: More detailed error message
+            dateTime: 2024-12-03T10:15:30
+          schema:
+            $ref: '#/components/schemas/ErrorMessageResponse'
+      description: Internal server error
+  schemas:
+    ErrorMessageResponse:
+      example:
+        message: Error message
+        detailedMessage: More detailed error message
+        dateTime: 2024-12-03T10:15:30
+      properties:
+        message:
+          description: Human-readable error message
+          type: string
+        detailedMessage:
+          description: "More detailed error message. For example, exception content"
+          type: string
+        dateTime:
+          description: Date and time of error occurrence. Format "YYYY-MM-DDThh:mm:ss"
+          format: date-time
+          type: string
+      required:
+      - dateTime
+      - detailedMessage
+      - message
+      type: object
+    EventLocation:
+      example:
+        id: 42
+        name: Ice Palace
+        address: "St. Petersburg, Pyatiletok 1"
+        capacity: 12300
+        description: Sports and concert complex in St. Petersburg
+      properties:
+        id:
+          description: Unique location identifier
+          format: int64
+          readOnly: true
+          type: integer
+        name:
+          description: Location name
+          type: string
+        address:
+          description: Location address
+          type: string
+        capacity:
+          description: Location capacity
+          minimum: 5
+          type: integer
+        description:
+          description: Additional location description
+          type: string
+      required:
+      - address
+      - capacity
+      - name
+      type: object
+    User:
+      description: User data
+      example:
+        id: 10
+        login: user_login
+        age: 21
+        role: USER
+      properties:
+        id:
+          description: Unique user identifier
+          format: int64
+          type: integer
+        login:
+          description: Unique user login
+          type: string
+        age:
+          description: User age
+          minimum: 0
+          type: int
+        role:
+          description: User role
+          enum:
+          - ADMIN
+          - USER
+          type: string
+      required:
+      - age
+      - id
+      - login
+      - role
+      type: object
+    UserRegistration:
+      description: User registration data
+      example:
+        login: new_user
+        password: strongpassword
+        age: 21
+      properties:
+        login:
+          description: User login. Must be unique
+          type: string
+        password:
+          description: User password
+          type: string
+        age:
+          description: User age
+          minimum: 18
+          type: int
+      required:
+      - age
+      - login
+      - password
+      type: object
+    JwtResponse:
+      example:
+        jwtToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+      properties:
+        jwtToken:
+          description: JWT token for authenticated user
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+          type: string
+      type: object
+    UserCredentials:
+      description: User authorization data. For obtaining JWT-token
+      example:
+        login: user_login
+        password: userpassword
+      properties:
+        login:
+          description: User login for authorization
+          type: string
+        password:
+          description: User password
+          type: string
+      required:
+      - login
+      - password
+      type: object
+    EventDto:
+      example:
+        occupiedPlaces: 15
+        date: 2000-01-23T04:56:07.000+00:00
+        duration: 60
+        cost: 1200
+        maxPlaces: 10
+        locationId: 0
+        name: Java Lecture
+        id: 42
+        ownerId: "10"
+        status: WAIT_START
+      properties:
+        id:
+          example: 42
+          format: int64
+          type: integer
+        name:
+          description: Event name
+          example: Java Lecture
+          type: string
+        ownerId:
+          description: id of event creator
+          example: "10"
+          type: string
+        maxPlaces:
+          description: Maximum number of places at the event
+          example: 10
+          type: integer
+        occupiedPlaces:
+          description: Number of already occupied places (creator not counted in count)
+          example: 15
+          type: integer
+        date:
+          description: Event start date and time. Format "YYYY-MM-DDThh:mm:ss"
+          format: date-time
+          type: string
+        cost:
+          description: Event cost in rubles
+          example: 1200
+          minimum: 0
+          type: decimal
+        duration:
+          description: Event duration in minutes
+          example: 60
+          minimum: 30
+          type: integer
+        locationId:
+          description: "Location identifier where event takes place"
+          type: integer
+        status:
+          $ref: '#/components/schemas/EventStatus'
+      required:
+      - cost
+      - date
+      - duration
+      - id
+      - locationId
+      - maxPlaces
+      - name
+      - occupiedPlaces
+      - ownerId
+      type: object
+    EventStatus:
+      description: |-
+        * WAIT_START - event is waiting to start. New registrations are available in this state.
+        In this state, it is still possible to cancel the event (move to status CANCELLED), in other states - no.
+        * STARTED - event has started. New registrations are not available for the event.
+        * CANCELLED - event cancelled by organizer. New registrations are not available for the event.
+        * FINISHED - event has ended. New registrations are not available for the event.
+      enum:
+      - WAIT_START
+      - STARTED
+      - CLOSED
+      - FINISHED
+      example: WAIT_START
+      type: string
+    EventCreateRequestDto:
+      description: Object with data for creating a new event.
+      example:
+        date: 2000-01-23T04:56:07.000+00:00
+        duration: 60
+        cost: 1200
+        maxPlaces: 10
+        locationId: 10
+        name: Java Lecture
+      properties:
+        name:
+          description: Event name
+          example: Java Lecture
+          type: string
+        maxPlaces:
+          description: Maximum number of places at the event
+          example: 10
+          type: integer
+        date:
+          description: Event start date and time. Format "YYYY-MM-DDThh:mm:ss"
+          format: date-time
+          type: string
+        cost:
+          description: Event cost in rubles
+          example: 1200
+          minimum: 0
+          type: integer
+        duration:
+          description: Event duration in minutes
+          example: 60
+          minimum: 30
+          type: integer
+        locationId:
+          description: "Location identifier where event takes place"
+          example: 10
+          type: integer
+      required:
+      - cost
+      - date
+      - duration
+      - locationId
+      - maxPlaces
+      - name
+      type: object
+    EventUpdateRequestDto:
+      description: Object with data for updating event
+      example:
+        date: 2000-01-23T04:56:07.000+00:00
+        duration: 60
+        cost: 3000
+        maxPlaces: 100
+        locationId: 50
+        name: New name
+      properties:
+        name:
+          description: New event name
+          example: New name
+          type: string
+        maxPlaces:
+          description: "New number of places at the event. Location must allow accommodating so many people. Must be more than already registered people."
+          example: 100
+          type: integer
+        date:
+          description: New event start date and time. Format "YYYY-MM-DDThh:mm:ss"
+          format: date-time
+          type: string
+        cost:
+          description: New event cost in rubles
+          example: 3000
+          minimum: 0
+          type: decimal
+        duration:
+          description: New event duration in minutes
+          example: 60
+          minimum: 30
+          type: integer
+        locationId:
+          description: "New location for the event. Location must accommodate the number of users already registered. Also location must accommodate maxPlaces - number of places at the event."
+          example: 50
+          type: integer
+      type: object
+    EventSearchRequestDto:
+      description: "Filter for searching events. No mandatory fields. If all fields are not specified, then the list of all events should be returned"
+      example:
+        durationMax: 120
+        dateStartBefore: 2000-01-23T04:56:07.000+00:00
+        placesMin: 10
+        locationId: 5
+        eventStatus: WAIT_START
+        name: Java Lecture
+        placesMax: 100
+        costMin: 1000
+        dateStartAfter: 2000-01-23T04:56:07.000+00:00
+        costMax: 5000
+        durationMin: 60
+      properties:
+        name:
+          description: Event name for search
+          example: Java Lecture
+          type: string
+        placesMin:
+          description: Minimum event capacity
+          example: 10
+          type: integer
+        placesMax:
+          description: Maximum event capacity
+          example: 100
+          type: integer
+        dateStartAfter:
+          description: Minimum event start date and time. Format "YYYY-MM-DDThh:mm:ss"
+          format: date-time
+          type: string
+        dateStartBefore:
+          description: Maximum event start date and time. Format "YYYY-MM-DDThh:mm:ss"
+          format: date-time
+          type: string
+        costMin:
+          description: Minimum event participation cost in rubles
+          example: 1000
+          type: number
+        costMax:
+          description: Maximum event participation cost in rubles
+          example: 5000
+          type: number
+        durationMin:
+          description: Minimum event duration in minutes
+          example: 60
+          type: integer
+        durationMax:
+          description: Maximum event duration in minutes
+          example: 120
+          type: integer
+        locationId:
+          description: Event location identifier for filtering
+          example: 5
+          type: integer
+        eventStatus:
+          $ref: '#/components/schemas/EventStatus'
+      type: object
+  securitySchemes:
+    bearerAuth:
+      bearerFormat: JWT
+      scheme: bearer
+      type: http
