@@ -18,14 +18,16 @@ public class UserController {
     private final UserService userService;
     private final UserRegistrationService registrationService;
     private final AuthenticationService authenticationService;
+    private final UserDtoMapper dtoMapper;
 
     public UserController(UserService userService,
                           UserRegistrationService registrationService,
-                          AuthenticationService authenticationService
-    ) {
+                          AuthenticationService authenticationService,
+                          UserDtoMapper dtoMapper) {
         this.userService = userService;
         this.registrationService = registrationService;
         this.authenticationService = authenticationService;
+        this.dtoMapper = dtoMapper;
     }
 
     @PostMapping
@@ -33,7 +35,7 @@ public class UserController {
         log.info("Get request for sign-up: login={}", signUpRequest.login());
         User user = registrationService.registerUser(signUpRequest);
         return ResponseEntity.status(201)
-                .body(convertDomainUser(user));
+                .body(dtoMapper.convertDomainUser(user));
     }
 
     @PostMapping("/auth")
@@ -51,15 +53,7 @@ public class UserController {
     ) {
         log.info("Get request for get user info: userId={}", userId);
         User userById = userService.getUserById(userId);
-        return ResponseEntity.ok(convertDomainUser(userById));
+        return ResponseEntity.ok(dtoMapper.convertDomainUser(userById));
     }
 
-    private UserDto convertDomainUser(User user) {
-        return new UserDto(
-                user.id(),
-                user.login(),
-                user.age(),
-                user.role()
-        );
-    }
 }
