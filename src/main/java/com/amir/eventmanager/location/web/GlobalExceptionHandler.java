@@ -1,10 +1,10 @@
 package com.amir.eventmanager.location.web;
 
-import com.amir.eventmanager.location.LocationController;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -37,6 +37,17 @@ public class GlobalExceptionHandler {
         log.error("Handle bad request exception", e);
         ErrorMessageResponse messageResponse = new ErrorMessageResponse("Bad request", e.getMessage(), LocalDateTime.now());
         return ResponseEntity.status(400)
+                .body(messageResponse);
+    }
+
+    @ExceptionHandler(value = BadCredentialsException.class)
+    public ResponseEntity<Object> handleBadCredentials(Exception e) {
+        log.error("Handle bad credentials", e);
+        ErrorMessageResponse messageResponse = new ErrorMessageResponse(
+                "Failed to authenticate",
+                e.getMessage(),
+                LocalDateTime.now());
+        return ResponseEntity.status(401)
                 .body(messageResponse);
     }
 }
