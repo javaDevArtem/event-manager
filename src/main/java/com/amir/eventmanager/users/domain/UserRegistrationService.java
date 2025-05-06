@@ -16,7 +16,7 @@ public class UserRegistrationService {
     }
 
     public User registerUser(SignUpRequest signUpRequest) {
-        if (userService.isUserExistByLogin(signUpRequest.login())) {
+        if (userService.isUserExistsByLogin(signUpRequest.login())) {
             throw new IllegalArgumentException("User with such login already exist");
         }
         String hashedPass = passwordEncoder.encode(signUpRequest.password());

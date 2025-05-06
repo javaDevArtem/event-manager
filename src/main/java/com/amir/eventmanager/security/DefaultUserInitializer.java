@@ -29,7 +29,7 @@ public class DefaultUserInitializer {
             String password,
             UserRole role
     ) {
-        if (userService.isUserExistByLogin(login)) {
+        if (userService.isUserExistsByLogin(login)) {
             return;
         }
         String hashedPass = passwordEncoder.encode(password);
