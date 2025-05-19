@@ -1,5 +1,7 @@
 package com.amir.eventmanager.security;
 
+import com.amir.eventmanager.users.domain.User;
+import com.amir.eventmanager.users.domain.UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,13 +21,15 @@ import java.util.List;
 @Component
 public class JwtTokenFilter extends OncePerRequestFilter {
 
-    private static final Logger log = LoggerFactory.getLogger(JwtTokenFilter.class);
+    private final static Logger log = LoggerFactory.getLogger(JwtTokenFilter.class);
 
+    private final JwtTokenManager jwtTokenManager;
+    private final UserService userService;
 
-    private final JwtTokenManager tokenManager;
-
-    public JwtTokenFilter(JwtTokenManager tokenManager) {
-        this.tokenManager = tokenManager;
+    public JwtTokenFilter(JwtTokenManager jwtTokenManager,
+                          UserService userService) {
+        this.jwtTokenManager = jwtTokenManager;
+        this.userService = userService;
     }
 
     @Override
@@ -35,24 +39,30 @@ public class JwtTokenFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
         String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (authorization == null || authorization.startsWith("Bearer")) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
+            return;
         }
         String jwtToken = authorization.substring(7);
-        if (!tokenManager.isTokenValid(jwtToken)) {
+
+        if (!jwtTokenManager.isTokenValid(jwtToken)) {
             log.info("Jwt token not valid");
             filterChain.doFilter(request, response);
+            return;
         }
-        String login = tokenManager.getLoginFromToken(jwtToken);
-        String role = tokenManager.getRoleFromToken(jwtToken);
+
+        String login = jwtTokenManager.getLoginFromToken(jwtToken);
+        String role = jwtTokenManager.getRoleFromToken(jwtToken);
+
+        User user = userService.getUserByLogin(login);
 
         UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(
-                login,
+                user,
                 null,
                 List.of(new SimpleGrantedAuthority(role))
         );
         SecurityContextHolder.getContext().setAuthentication(token);
         filterChain.doFilter(request, response);
-
     }
+
 }

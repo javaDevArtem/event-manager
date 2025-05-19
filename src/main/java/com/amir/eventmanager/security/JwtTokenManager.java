@@ -17,29 +17,30 @@ import java.util.Map;
 @Service
 public class JwtTokenManager {
 
-    private final Long tokenLifeTime;
+    private final Long tokenLifetime;
     private final Key signKey;
 
-
     public JwtTokenManager(
-            @Value("${jwt.lifetime}") Long tokenLifeTime,
-            @Value("${jwt.sign-key}") String signKey) {
-        this.tokenLifeTime = tokenLifeTime;
+            @Value("${jwt.lifetime}") Long tokenLifetime,
+            @Value("${jwt.sign-key}") String signKey
+    ) {
+        this.tokenLifetime = tokenLifetime;
         this.signKey = new SecretKeySpec(
                 signKey.getBytes(StandardCharsets.UTF_8),
-                SignatureAlgorithm.HS256.getJcaName());
+                SignatureAlgorithm.HS256.getJcaName()
+        );
     }
 
     public String generateToken(User user) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", user.role().name());
         Date issuedTime = new Date();
-        Date expiredTime = new Date(issuedTime.getTime() + tokenLifeTime);
+        Date expirationTime = new Date(issuedTime.getTime() + tokenLifetime);
         return Jwts.builder()
-                .setClaims(claims)
+                .claims(claims)
                 .subject(user.login())
                 .issuedAt(issuedTime)
-                .expiration(expiredTime)
+                .expiration(expirationTime)
                 .signWith(signKey)
                 .compact();
     }
