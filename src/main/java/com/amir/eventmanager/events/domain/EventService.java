@@ -5,6 +5,10 @@ import com.amir.eventmanager.events.db.EventEntity;
 import com.amir.eventmanager.events.db.EventRepository;
 import com.amir.eventmanager.location.Location;
 import com.amir.eventmanager.location.LocationService;
+import com.amir.eventmanager.message.EventChangeKafkaMessage;
+import com.amir.eventmanager.message.EventChangeMessageService;
+import com.amir.eventmanager.message.EventFieldChange;
+import com.amir.eventmanager.message.EventSender;
 import com.amir.eventmanager.users.api.AuthenticationService;
 import com.amir.eventmanager.users.domain.User;
 import com.amir.eventmanager.users.domain.UserRole;
@@ -13,6 +17,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,15 +32,20 @@ public class EventService {
     private final LocationService locationService;
     private final AuthenticationService authenticationService;
     private final EventEntityMapper entityMapper;
+    private final EventSender eventSender;
+    private final EventChangeMessageService eventChangeMessageService;
 
     public EventService(EventRepository eventRepository,
                         LocationService locationService,
                         AuthenticationService authenticationService,
-                        EventEntityMapper entityMapper) {
+                        EventEntityMapper entityMapper, EventSender eventSender,
+                        EventChangeMessageService eventChangeMessageService) {
         this.eventRepository = eventRepository;
         this.locationService = locationService;
         this.authenticationService = authenticationService;
         this.entityMapper = entityMapper;
+        this.eventSender = eventSender;
+        this.eventChangeMessageService = eventChangeMessageService;
     }
 
     public Event createEvent(EventCreateRequestDto createRequest) {
@@ -91,6 +102,8 @@ public class EventService {
         }
 
         eventRepository.changeEventStatus(eventId, EventStatus.CANCELLED);
+        eventChangeMessageService.sendStatusChangeMessage(event, EventStatus.CANCELLED, 
+            authenticationService.getCurrentAuthenticatedUser().id());
     }
 
     public Event updateEvent(Long eventId,
@@ -139,8 +152,61 @@ public class EventService {
                 .ifPresent(event::setLocationId);
 
         eventRepository.save(event);
+        Event updatedEvent = entityMapper.toDomain(event);
+        
+        EventChangeKafkaMessage changeMessage = new EventChangeKafkaMessage(
+                event.getRegistrationList().stream().map(reg -> reg.getUserId()).toList(),
+                updatedEvent.ownerId(),
+                authenticationService.getCurrentAuthenticatedUser().id(),
+                eventId
+        );
 
-        return entityMapper.toDomain(event);
+        // Отслеживаем изменения полей
+        if (updateRequest.name() != null && !updateRequest.name().equals(event.getName())) {
+            EventFieldChange<String> nameChange = new EventFieldChange<>();
+            nameChange.setOldField(event.getName());
+            nameChange.setNewField(updateRequest.name());
+            changeMessage.setName(nameChange);
+        }
+
+        if (updateRequest.maxPlaces() != null && !updateRequest.maxPlaces().equals(event.getMaxPlaces())) {
+            EventFieldChange<Integer> maxPlacesChange = new EventFieldChange<>();
+            maxPlacesChange.setOldField(event.getMaxPlaces());
+            maxPlacesChange.setNewField(updateRequest.maxPlaces());
+            changeMessage.setMaxPlaces(maxPlacesChange);
+        }
+
+        if (updateRequest.date() != null && !updateRequest.date().equals(event.getDate())) {
+            EventFieldChange<LocalDateTime> dateChange = new EventFieldChange<>();
+            dateChange.setOldField(event.getDate());
+            dateChange.setNewField(updateRequest.date());
+            changeMessage.setDate(dateChange);
+        }
+
+        if (updateRequest.cost() != null && !updateRequest.cost().equals(event.getCost())) {
+            EventFieldChange<BigDecimal> costChange = new EventFieldChange<>();
+            costChange.setOldField(BigDecimal.valueOf(event.getCost()));
+            costChange.setNewField(BigDecimal.valueOf(updateRequest.cost()));
+            changeMessage.setCost(costChange);
+        }
+
+        if (updateRequest.duration() != null && !updateRequest.duration().equals(event.getDuration())) {
+            EventFieldChange<Integer> durationChange = new EventFieldChange<>();
+            durationChange.setOldField(event.getDuration());
+            durationChange.setNewField(updateRequest.duration());
+            changeMessage.setDuration(durationChange);
+        }
+
+        if (updateRequest.locationId() != null && !updateRequest.locationId().equals(event.getLocationId())) {
+            EventFieldChange<Integer> locationChange = new EventFieldChange<>();
+            locationChange.setOldField(event.getLocationId() != null ? event.getLocationId().intValue() : null);
+            locationChange.setNewField(updateRequest.locationId() != null ? updateRequest.locationId().intValue() : null);
+            changeMessage.setLocationId(locationChange);
+        }
+
+        eventSender.sendEven(changeMessage);
+
+        return updatedEvent;
     }
 
 
